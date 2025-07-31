@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useContext, useRef } from "react";
-import axios from "axios";
+import axiosInstance from "@/axiosConfig";
 import {
   useReactTable,
   getCoreRowModel,
@@ -492,7 +492,7 @@ export const ServersContent = () => {
       console.log("filterOptions из контекста:", currentFilters);
       console.log("Параметры запроса:", params);
 
-      const response = await axios.get(
+      const response = await axiosInstance.get(
         "https://vpnbot.sjp-asia.group/admin_panel/api/servers/",
         { params }
       );

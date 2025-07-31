@@ -1,5 +1,5 @@
-import React, { createContext, useState } from "react";
-import axios from "axios";
+import React, { createContext, useContext, useState } from "react";
+import axiosInstance from "@/axiosConfig";
 import { usePagination } from "@/providers/PaginationContext";
 import { BASE_URL } from "../static";
 
@@ -33,7 +33,7 @@ export const ServersFilterProvider = ({ children }) => {
         ...finalFilters,
       };
 
-      const response = await axios.get(`${BASE_URL}/servers/`, {
+      const response = await axiosInstance.get(`${BASE_URL}/servers/`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },

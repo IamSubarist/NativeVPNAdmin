@@ -10,10 +10,9 @@ import { useLayout } from "@/providers";
 import { Alert } from "@/components";
 const loginSchema = Yup.object().shape({
   email: Yup.string()
-    .email("Недопустимый формат email")
     .min(3, "Минимум 3 символа")
     .max(50, "Максимум 50 символов")
-    .required("Email обязателен"),
+    .required("Логин обязателен"),
   password: Yup.string()
     .min(3, "Минимум 3 символа")
     .max(50, "Максимум 50 символов")
@@ -134,10 +133,10 @@ const Login = () => {
         {formik.status && <Alert variant="danger">{formik.status}</Alert>}
 
         <div className="flex flex-col gap-1">
-          <label className="form-label text-gray-900">Email</label>
+          <label className="form-label text-gray-900">Логин или Email</label>
           <label className="input">
             <input
-              placeholder="Введите email"
+              placeholder="Введите логин или email"
               autoComplete="off"
               {...formik.getFieldProps("email")}
               className={clsx("form-control", {
