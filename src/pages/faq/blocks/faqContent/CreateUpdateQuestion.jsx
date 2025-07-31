@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Select } from "../../../../components/select/select";
 import { useNavigate, useParams, useLocation } from "react-router";
-import axios from "axios";
+import axiosInstance from "@/axiosConfig";
 import { deleteFaq } from "./FaqData";
-import { Textarea } from "../../../../components/textarea/textarea";
 import { BASE_URL } from "../../../../static";
 import { InputField } from "../../../../components/inputField/inputField";
 import { toast, Bounce } from "react-toastify";
 import { Input } from "antd";
 const { TextArea } = Input;
-// import ReactQuill from "react-quill";
-// import 'react-quill/dist/quill.snow.css';
 import MarkdownIt from 'markdown-it';
 import MdEditor from 'react-markdown-editor-lite';
 import 'react-markdown-editor-lite/lib/index.css';
@@ -29,6 +26,10 @@ export const CreateUpdateQuestion = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({
+    question: false,
+    answer: false,
+  });
 
   const faqItem = location.state?.faqItem;
 
@@ -40,12 +41,7 @@ export const CreateUpdateQuestion = () => {
         status: faqItem.status,
       });
     } else if (id) {
-      axios
-        .get(`${BASE_URL}/faq/${id}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("admin_token")}`,
-          },
-        })
+      axiosInstance.get(`/faq/${id}`)
         .then((res) => {
           const { question, answer, status } = res.data;
           setFormData({ question, answer, status });
@@ -62,6 +58,10 @@ export const CreateUpdateQuestion = () => {
     }));
   };
 
+  const handleEditorChange = ({ text }) => {
+    setFormData(prev => ({...prev, answer: text}));
+  };
+
   const showAlert = (type, message) => {
     toast[type](message, {
       position: "top-center",
@@ -76,11 +76,6 @@ export const CreateUpdateQuestion = () => {
     });
   };
 
-  const [errors, setErrors] = useState({
-    question: false,
-    answer: false,
-  });
-
   const validateForm = () => {
     const newErrors = {
       question: !formData.question,
@@ -88,67 +83,41 @@ export const CreateUpdateQuestion = () => {
     };
 
     setErrors(newErrors);
-
-    const hasError = Object.values(newErrors).some(Boolean);
-    if (hasError) {
-      showAlert("error", "Заполните обязательные поля");
-    }
-
-    return !hasError;
+    return !Object.values(newErrors).some(Boolean);
   };
 
   const handleSave = async () => {
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setLoading(true);
     try {
       const method = id ? "patch" : "post";
-      const url = id ? `${BASE_URL}/faq/${id}` : `${BASE_URL}/faq/`;
+      const url = id ? `/faq/${id}` : `/faq/`;
 
-      await axios({
-        method,
-        url,
-        data: formData,
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("admin_token")}`,
-        },
-      });
+      await axiosInstance({ method, url, data: formData });
       navigate("/faq");
     } catch (e) {
       console.error("Ошибка при сохранении:", e);
+      showAlert("error", "Ошибка при сохранении");
     } finally {
       setLoading(false);
     }
   };
 
   const handleSaveAndAddMore = async () => {
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
+
     setLoading(true);
     try {
       const method = id ? "patch" : "post";
-      const url = id ? `${BASE_URL}/faq/${id}` : `${BASE_URL}/faq/`;
+      const url = id ? `/faq/${id}` : `/faq/`;
 
-      await axios({
-        method,
-        url,
-        data: formData,
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("admin_token")}`,
-        },
-      });
-
-      setFormData({
-        question: "",
-        answer: "",
-        status: "active",
-      });
+      await axiosInstance({ method, url, data: formData });
+      setFormData({ question: "", answer: "", status: "active" });
       navigate("/faq/create-update-question");
     } catch (e) {
       console.error("Ошибка при сохранении:", e);
+      showAlert("error", "Ошибка при сохранении");
     } finally {
       setLoading(false);
     }
@@ -160,6 +129,7 @@ export const CreateUpdateQuestion = () => {
       navigate("/faq");
     } catch (error) {
       console.error("Не удалось удалить вопрос", error);
+      showAlert("error", "Не удалось удалить вопрос");
     }
   };
 
@@ -174,29 +144,14 @@ export const CreateUpdateQuestion = () => {
         </div>
         <div className="min-[1024px]:flex px-4 gap-4 mt-4">
           <div className="w-full flex flex-col gap-4">
-            {/* <Textarea
-              text="Вопрос"
-              value={formData.question}
-              onChange={handleChange("question")}
-              // height={326}
-              className="textarea textarea-bordered"
-            /> */}
             <InputField
               text="Вопрос"
               value={formData.question}
               onChange={handleChange("question")}
-              // height={326}
               className="input"
               isInvalid={errors.question}
             />
-            {/* <Textarea
-              text="Ответ"
-              value={formData.answer}
-              onChange={handleChange("answer")}
-              height={382}
-              className="input"
-              isInvalid={errors.answer}
-            /> */}
+
             <div className="relative">
               <label
                 style={{
@@ -210,20 +165,14 @@ export const CreateUpdateQuestion = () => {
               >
                 Ответ
               </label>
-              {/* <TextArea
-                value={formData.answer}
-                onChange={handleChange("answer")}
-                style={{ height: "382px", resize: "none" }}
-                status={errors.answer ? "error" : ""}
-              /> */}
               <MdEditor
                 value={formData.answer}
                 style={{ height: "382px" }}
                 renderHTML={(text) => mdParser.render(text)}
-                onChange={({ text }) => setFormData(prev => ({...prev, answer: text}))}
-                status={errors.answer ? "error" : ""}
+                onChange={handleEditorChange}
               />
             </div>
+
             <Select
               isStatus={true}
               text="Статус"
@@ -235,24 +184,15 @@ export const CreateUpdateQuestion = () => {
               ]}
             />
           </div>
-          {/* <div className="lg:w-1/2">
-            <ReactQuill
-              theme="snow"
-              value={formData.answer}
-              onChange={handleChange("answer")}
-              modules={{ toolbar: false }}
-              placeholder="Введите текст с форматированием..."
-            />
-          </div> */}
         </div>
       </div>
       <div className="lg:flex-row flex flex-col gap-4 pt-4 justify-between">
-        <button
-          className="lg:w-1/4 py-2 flex justify-center btn btn-outline btn-danger"
-          onClick={() => handleDelete(id)}
-        >
-          Удалить
-        </button>
+          <button
+            className="lg:w-1/4 py-2 flex justify-center btn btn-outline btn-danger"
+            onClick={() => handleDelete(id)}
+          >
+            Удалить
+          </button>
         <button
           className="lg:w-1/4 flex justify-center btn btn-outline btn-primary"
           onClick={() => navigate("/faq")}

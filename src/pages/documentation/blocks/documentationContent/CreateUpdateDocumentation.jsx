@@ -1,16 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Select } from "../../../../components/select/select";
 import { useNavigate, useParams, useLocation } from "react-router";
-import axios from "axios";
+import axiosInstance from "@/axiosConfig";
 import { deleteDocumentation } from "./DocumentationData";
-import { Textarea } from "../../../../components/textarea/textarea";
-import { BASE_URL } from "../../../../static";
 import { InputField } from "../../../../components/inputField/inputField";
 import { toast, Bounce } from "react-toastify";
-import { Input } from "antd";
-const { TextArea } = Input;
-// import ReactQuill from "react-quill";
-// import 'react-quill/dist/quill.snow.css';
 import MarkdownIt from 'markdown-it';
 import MdEditor from 'react-markdown-editor-lite';
 import 'react-markdown-editor-lite/lib/index.css';
@@ -29,6 +23,10 @@ export const CreateUpdateDocumentation = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({
+    name: false,
+    text: false,
+  });
 
   const documentationItem = location.state?.documentationItem;
 
@@ -40,17 +38,15 @@ export const CreateUpdateDocumentation = () => {
         status: documentationItem.status,
       });
     } else if (id) {
-      axios
-        .get(`${BASE_URL}/docs_rules/${id}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("admin_token")}`,
-          },
-        })
+      axiosInstance.get(`/docs_rules/${id}`)
         .then((res) => {
           const { name, text, status } = res.data;
           setFormData({ name, text, status });
         })
-        .catch((err) => console.error("Ошибка загрузки вопроса", err));
+        .catch((err) => {
+          console.error("Ошибка загрузки документа", err);
+          showAlert("error", "Не удалось загрузить документ");
+        });
     }
   }, [id, documentationItem]);
 
@@ -60,6 +56,10 @@ export const CreateUpdateDocumentation = () => {
       ...prev,
       [field]: value,
     }));
+  };
+
+  const handleEditorChange = ({ text }) => {
+    setFormData(prev => ({...prev, text}));
   };
 
   const showAlert = (type, message) => {
@@ -76,11 +76,6 @@ export const CreateUpdateDocumentation = () => {
     });
   };
 
-  const [errors, setErrors] = useState({
-    name: false,
-    text: false,
-  });
-
   const validateForm = () => {
     const newErrors = {
       name: !formData.name,
@@ -88,37 +83,26 @@ export const CreateUpdateDocumentation = () => {
     };
 
     setErrors(newErrors);
-
-    const hasError = Object.values(newErrors).some(Boolean);
-    if (hasError) {
-      showAlert("error", "Заполните обязательные поля");
-    }
-
-    return !hasError;
+    return !Object.values(newErrors).some(Boolean);
   };
 
   const handleSave = async () => {
     if (!validateForm()) {
+      showAlert("error", "Заполните обязательные поля");
       return;
     }
+
     setLoading(true);
     try {
       const method = id ? "patch" : "post";
-      const url = id
-        ? `${BASE_URL}/docs_rules/${id}`
-        : `${BASE_URL}/docs_rules/`;
+      const url = id ? `/docs_rules/${id}` : `/docs_rules/`;
 
-      await axios({
-        method,
-        url,
-        data: formData,
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("admin_token")}`,
-        },
-      });
+      await axiosInstance({ method, url, data: formData });
+      showAlert("success", "Документ успешно сохранён");
       navigate("/documentation");
     } catch (e) {
       console.error("Ошибка при сохранении:", e);
+      showAlert("error", "Ошибка при сохранении документа");
     } finally {
       setLoading(false);
     }
@@ -126,24 +110,17 @@ export const CreateUpdateDocumentation = () => {
 
   const handleSaveAndAddMore = async () => {
     if (!validateForm()) {
+      showAlert("error", "Заполните обязательные поля");
       return;
     }
+
     setLoading(true);
     try {
       const method = id ? "patch" : "post";
-      const url = id
-        ? `${BASE_URL}/docs_rules/${id}`
-        : `${BASE_URL}/docs_rules/`;
+      const url = id ? `/docs_rules/${id}` : `/docs_rules/`;
 
-      await axios({
-        method,
-        url,
-        data: formData,
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("admin_token")}`,
-        },
-      });
-
+      await axiosInstance({ method, url, data: formData });
+      showAlert("success", "Документ успешно сохранён");
       setFormData({
         name: "",
         text: "",
@@ -152,6 +129,7 @@ export const CreateUpdateDocumentation = () => {
       navigate("/documentation/create-update-documentation");
     } catch (e) {
       console.error("Ошибка при сохранении:", e);
+      showAlert("error", "Ошибка при сохранении документа");
     } finally {
       setLoading(false);
     }
@@ -160,9 +138,11 @@ export const CreateUpdateDocumentation = () => {
   const handleDelete = async (documentationId) => {
     try {
       await deleteDocumentation(documentationId);
+      showAlert("success", "Документ успешно удалён");
       navigate("/documentation");
     } catch (error) {
-      console.error("Не удалось удалить вопрос", error);
+      console.error("Не удалось удалить документ", error);
+      showAlert("error", "Не удалось удалить документ");
     }
   };
 
@@ -183,41 +163,20 @@ export const CreateUpdateDocumentation = () => {
             className="textarea textarea-bordered"
             isInvalid={errors.name}
           />
-          {/* <Textarea
-            text="Содержание"
-            value={formData.text}
-            onChange={handleChange("text")}
-            height={300}
-            className="textarea textarea-bordered"
-            isInvalid={errors.text}
-          /> */}
+
           <div className="relative">
-            <label
-              style={{
-                color: "#99A1B7",
-                fontSize: "11px",
-                marginBottom: "0px",
-              }}
-              className="absolute top-[-10px] px-1 left-2 z-10 text-sm font-medium text-gray-900
-             before:content-[''] before:absolute before:top-1/2 before:left-0
-             before:w-full before:h-1/2 before:bg-[#FCFCFC] before:z-[-1]"
-            >
+            <label className="absolute top-[-10px] px-1 left-2 z-10 text-sm font-medium text-gray-900 before:content-[''] before:absolute before:top-1/2 before:left-0 before:w-full before:h-1/2 before:bg-[#FCFCFC] before:z-[-1]">
               Содержание
             </label>
-            {/* <TextArea
-              value={formData.text}
-              onChange={handleChange("text")}
-              style={{ height: "300px", resize: "none" }}
-              status={errors.text ? "error" : ""}
-            /> */}
             <MdEditor
-                value={formData.text}
-                style={{ height: "382px" }}
-                renderHTML={(text) => mdParser.render(text)}
-                onChange={({ text }) => setFormData(prev => ({...prev, text: text}))}
-                status={errors.text ? "error" : ""}
+              value={formData.text}
+              style={{ height: "382px" }}
+              renderHTML={(text) => mdParser.render(text)}
+              onChange={handleEditorChange}
+              status={errors.text ? "error" : ""}
             />
           </div>
+
           <Select
             isStatus={true}
             text="Статус"
@@ -231,12 +190,14 @@ export const CreateUpdateDocumentation = () => {
         </div>
       </div>
       <div className="lg:flex-row flex flex-col gap-4 pt-4 justify-between">
-        <button
-          className="lg:w-1/4 py-2 flex justify-center btn btn-outline btn-danger"
-          onClick={() => handleDelete(id)}
-        >
-          Удалить
-        </button>
+        {id && (
+          <button
+            className="lg:w-1/4 py-2 flex justify-center btn btn-outline btn-danger"
+            onClick={() => handleDelete(id)}
+          >
+            Удалить
+          </button>
+        )}
         <button
           className="lg:w-1/4 flex justify-center btn btn-outline btn-primary"
           onClick={() => navigate("/documentation")}
@@ -246,6 +207,7 @@ export const CreateUpdateDocumentation = () => {
         <button
           className="lg:w-1/4 flex justify-center btn btn-outline btn-primary"
           onClick={handleSaveAndAddMore}
+          disabled={loading}
         >
           Сохранить и добавить еще
         </button>
