@@ -15,3 +15,4 @@ export * from "./PaginationContext";
 export * from "./AccessProvider";
 export * from "./MailingFilterProvider";
 export * from "./ServersFilterProvider";
+export * from "./PromocodesFilterProvider";

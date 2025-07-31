@@ -16,6 +16,7 @@ import {
   AccessProvider,
   MailingFilterProvider,
   ServersFilterProvider,
+  PromocodesFilterProvider,
 } from "@/providers";
 
 import { HelmetProvider } from "react-helmet-async";
@@ -40,7 +41,9 @@ const ProvidersWrapper = ({ children }) => {
                                   <ServersFilterProvider>
                                     <FaqPaginationProvider>
                                       <MailingFilterProvider>
-                                        {children}
+                                        <PromocodesFilterProvider>
+                                          {children}
+                                        </PromocodesFilterProvider>
                                       </MailingFilterProvider>
                                     </FaqPaginationProvider>
                                   </ServersFilterProvider>

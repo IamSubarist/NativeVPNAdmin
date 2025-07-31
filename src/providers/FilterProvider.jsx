@@ -1,7 +1,6 @@
 import React, { createContext, useState, useMemo } from "react";
-import axios from "axios";
+import axiosInstance from "@/axiosConfig";
 import { usePagination } from "@/providers/PaginationContext";
-import { BASE_URL } from "../static";
 
 export const FilterContext = createContext();
 
@@ -89,15 +88,22 @@ export const FilterProvider = ({ children }) => {
     retries = 5
   ) => {
     try {
-      const response = await axios.get(`${BASE_URL}/users/`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        params: { page, per_page, ...finalFilters },
-      });
+      // Преобразуем параметры из page/per_page в offset/limit
+      const params = { ...finalFilters };
+      if (page !== undefined) {
+        params.offset = (page - 1) * (per_page || 10); // offset как смещение элементов (0, 10, 20...)
+      }
+      if (per_page !== undefined) {
+        params.limit = per_page;
+      }
+
+      const response = await axiosInstance.get(
+        "https://vpnbot.sjp-asia.group/admin_panel/api/users/",
+        { params }
+      );
 
       setNewListUsers(response.data);
-      setTotalPages(response.data.total_pages);
+      setTotalPages(response.data.total_pages || 1);
       setUpdating(false);
     } catch (error) {
       if (retries > 0) {
@@ -105,7 +111,8 @@ export const FilterProvider = ({ children }) => {
         return updateUserList(finalFilters, page, per_page, retries - 1);
       }
       console.log("Filters params:", finalFilters);
-      console.error("Ошибка при загрузке всех задач:", error);
+      console.error("Ошибка при загрузке пользователей:", error);
+      setNewListUsers({ items: [], total_items: 0, total_pages: 1 });
     }
   };
 
@@ -128,7 +135,6 @@ export const FilterProvider = ({ children }) => {
         filterOptions,
         newListUsers,
         addFilter,
-        updateUserList,
         clearFilters,
         setUpdating,
         removeFilter,

@@ -1,19 +1,14 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Select, InputNumber } from "antd";
+import { Select, Input } from "antd";
 import { KeenIcon } from "../../components/keenicons";
 import { FilterContext } from "../../providers/FilterProvider";
-import axios from "axios";
-import { BASE_URL } from "../../static";
+import axiosInstance from "@/axiosConfig";
 import { useLocation } from "react-router-dom";
+import { SingleDateTimePicker } from "../dashboard/blocks/SingleDateTimePicker";
 
 const FilterTabel = () => {
-  const {
-    filterOptions,
-    addFilter,
-    removeFilter,
-    updateUserList,
-    clearFilters,
-  } = useContext(FilterContext);
+  const { filterOptions, addFilter, removeFilter, clearFilters } =
+    useContext(FilterContext);
 
   const [searchKey, setSearchKey] = useState(""); // дефолтное значение — 'Все'
   const [prevSearchKey, setPrevSearchKey] = useState(null);
@@ -26,6 +21,16 @@ const FilterTabel = () => {
   const [subscriptionType, setSubscriptionType] = useState(null);
   const [gamesportStatus, setGamesportStatus] = useState(null);
   const [giveawayValue, setGiveawayValue] = useState(null);
+
+  // Состояния для новых фильтров
+  const [replenishmentFrom, setReplenishmentFrom] = useState("");
+  const [replenishmentTo, setReplenishmentTo] = useState("");
+  const [daysAccessFrom, setDaysAccessFrom] = useState("");
+  const [daysAccessTo, setDaysAccessTo] = useState("");
+  const [referralsFrom, setReferralsFrom] = useState("");
+  const [referralsTo, setReferralsTo] = useState("");
+  const [giftsFrom, setGiftsFrom] = useState("");
+  const [giftsTo, setGiftsTo] = useState("");
 
   const location = useLocation();
 
@@ -43,7 +48,6 @@ const FilterTabel = () => {
         setSearchKey(key);
         setSearch(value);
         addFilter(key, value);
-        updateUserList();
         break;
       }
     }
@@ -52,11 +56,9 @@ const FilterTabel = () => {
   useEffect(() => {
     const getGiveaways = async () => {
       try {
-        const response = await axios.get(`${BASE_URL}/info/giveaways`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("admin_token")}`,
-          },
-        });
+        const response = await axiosInstance.get(
+          "https://vpnbot.sjp-asia.group/admin_panel/api/info/giveaways"
+        );
         setGiveawaysData(response.data);
         console.log("getGiveaways", response.data);
       } catch (error) {
@@ -94,8 +96,56 @@ const FilterTabel = () => {
       removeFilter("max_balance");
     }
 
-    // Просто обновляем список (updateUserList сам отправит дефолтный запрос, если нет фильтров)
-    updateUserList();
+    // Новые фильтры
+    if (replenishmentFrom !== "") {
+      addFilter("min_sum_balances", replenishmentFrom);
+    } else {
+      removeFilter("min_sum_balances");
+    }
+
+    if (replenishmentTo !== "") {
+      addFilter("max_sum_balances", replenishmentTo);
+    } else {
+      removeFilter("max_sum_balances");
+    }
+
+    if (daysAccessFrom !== "") {
+      addFilter("min_days_access", daysAccessFrom);
+    } else {
+      removeFilter("min_days_access");
+    }
+
+    if (daysAccessTo !== "") {
+      addFilter("max_days_access", daysAccessTo);
+    } else {
+      removeFilter("max_days_access");
+    }
+
+    if (referralsFrom !== "") {
+      addFilter("min_referrals", referralsFrom);
+    } else {
+      removeFilter("min_referrals");
+    }
+
+    if (referralsTo !== "") {
+      addFilter("max_referrals", referralsTo);
+    } else {
+      removeFilter("max_referrals");
+    }
+
+    if (giftsFrom !== "") {
+      addFilter("min_gifts_sent", giftsFrom);
+    } else {
+      removeFilter("min_gifts_sent");
+    }
+
+    if (giftsTo !== "") {
+      addFilter("max_gifts_sent", giftsTo);
+    } else {
+      removeFilter("max_gifts_sent");
+    }
+
+    // Фильтры обновлены, DataGrid сам сделает запрос
   };
 
   const searchOptions = [
@@ -116,7 +166,7 @@ const FilterTabel = () => {
     >
       <div className="flex flex-col w-full gap-4">
         <div className="flex flex-col lg:flex-row gap-4 w-full">
-          <div className="input w-full lg:w-1/2">
+          <div className="input w-3/4">
             <i className="ki-outline ki-magnifier"></i>
             <input
               type="text"
@@ -130,7 +180,7 @@ const FilterTabel = () => {
               }}
             />
           </div>
-          <div className="flex gap-4 w-full flex-col lg:flex-row lg:w-1/2">
+          <div className="flex gap-4 w-1/4 flex-col lg:flex-row">
             <div className="w-full relative">
               <label
                 style={{
@@ -143,7 +193,7 @@ const FilterTabel = () => {
              before:content-[''] before:absolute before:top-1/2 before:left-0
              before:w-full before:h-1/2 before:bg-[#FCFCFC] before:z-[-1]"
               >
-                Искать по параметрам
+                По параметрам
               </label>
               <Select
                 className="input ps-0 pe-0 border-none"
@@ -156,195 +206,251 @@ const FilterTabel = () => {
                 style={{ width: "100%" }}
               />
             </div>
-            <div className="flex gap-4 w-full">
-              <div className="relative w-full">
-                <label
-                  style={{
-                    color: "#99A1B7",
-                    fontSize: "11px",
-                    display: "inline",
-                    marginBottom: "0px",
-                  }}
-                  className="absolute top-[-10px] px-1 left-2 z-10 text-sm font-medium text-gray-900
-             before:content-[''] before:absolute before:top-1/2 before:left-0
-             before:w-full before:h-1/2 before:bg-[#FCFCFC] before:z-[-1]"
-                >
-                  Билетов от
-                </label>
-                <InputNumber
-                  size="large"
-                  className="rounded-md text-sm w-full"
-                  min={0}
-                  value={valueMin}
-                  onChange={(value) => setValueMin(value)}
-                  onPressEnter={handleFilterOption}
-                  controls={false}
-                />
-              </div>
-              <div className="relative w-full">
-                <label
-                  style={{
-                    color: "#99A1B7",
-                    fontSize: "11px",
-                    display: "inline",
-                    marginBottom: "0px",
-                  }}
-                  className="absolute top-[-10px] px-1 left-2 z-10 text-sm font-medium text-gray-900
-             before:content-[''] before:absolute before:top-1/2 before:left-0
-             before:w-full before:h-1/2 before:bg-[#FCFCFC] before:z-[-1]"
-                >
-                  До
-                </label>
-                <InputNumber
-                  size="large"
-                  className="rounded-md text-sm w-full"
-                  min={0}
-                  value={valueMax}
-                  onChange={(value) => setValueMax(value)}
-                  onPressEnter={handleFilterOption}
-                  controls={false}
-                />
-              </div>
-              <div className="flex items-center justify-center gap-4">
-                <div className="text-xl opacity-90">
-                  <KeenIcon icon="question-2" />
-                </div>
-                <button type="submit" className="btn btn-outline btn-primary">
-                  Искать
-                </button>
-              </div>
+            <div className="flex gap-4 w-[77px]">
+              <button type="submit" className="btn btn-outline btn-primary">
+                Искать
+              </button>
             </div>
           </div>
         </div>
 
         <hr />
 
-        <div className="flex flex-row w-1/2 pr-0 lg:pr-2 gap-4 w-full lg:w-1/2">
-          <div className="w-full lg:w-1/2 relative">
-            <label
-              style={{
-                color: "#99A1B7",
-                fontSize: "11px",
-                display: "inline",
-                marginBottom: "0px",
-              }}
-              className="absolute top-[-10px] px-1 left-2 z-10 text-sm font-medium text-gray-900
-             before:content-[''] before:absolute before:top-1/2 before:left-0
-             before:w-full before:h-1/2 before:bg-[#FCFCFC] before:z-[-1]"
-            >
-              Конкурс
-            </label>
-            <Select
-              value={giveawayValue}
-              placeholder="Все"
-              className="input ps-0 pe-0 border-none"
-              options={[
-                { label: "Все", value: null },
-                ...giveawaysData.map((g) => ({
-                  label: g.name || `ID ${g.id}`,
-                  value: g.id,
-                })),
-              ]}
-              onChange={(value) => {
-                setGiveawayValue(value);
-                setSubscriptionType(null);
-                setGamesportStatus(null);
-
-                removeFilter("gs_subscription"); // очищаем оба
-                removeFilter("giveaway_id");
-
-                if (value !== null) {
-                  addFilter("giveaway_id", value);
-                }
-              }}
-
-              // allowClear
-            />
+        {/* Новая строка с фильтрами */}
+        <div className="flex flex-col lg:flex-row gap-4 w-full">
+          {/* Сумма пополнений */}
+          <div className="w-full">
+            <div className="flex items-center gap-2">
+              <div className="flex-1 relative">
+                <label
+                  style={{
+                    color: "#99A1B7",
+                    fontSize: "11px",
+                    display: "inline",
+                    marginBottom: "0px",
+                  }}
+                  className="absolute top-[-10px] px-1 left-2 z-10 text-sm font-medium text-gray-900
+               before:content-[''] before:absolute before:top-1/2 before:left-0
+               before:w-full before:h-1/2 before:bg-[#FCFCFC] before:z-[-1]"
+                >
+                  Сумма пополнений от
+                </label>
+                <Input
+                  placeholder="0"
+                  className="input w-full"
+                  value={replenishmentFrom}
+                  onChange={(e) => setReplenishmentFrom(e.target.value)}
+                  style={{ paddingLeft: "12px", paddingRight: "12px" }}
+                />
+              </div>
+              <span className="text-gray-500">-</span>
+              <div className="flex-1 relative">
+                <label
+                  style={{
+                    color: "#99A1B7",
+                    fontSize: "11px",
+                    display: "inline",
+                    marginBottom: "0px",
+                  }}
+                  className="absolute top-[-10px] px-1 left-2 z-10 text-sm font-medium text-gray-900
+               before:content-[''] before:absolute before:top-1/2 before:left-0
+               before:w-full before:h-1/2 before:bg-[#FCFCFC] before:z-[-1]"
+                >
+                  до
+                </label>
+                <Input
+                  placeholder="0"
+                  className="input w-full"
+                  value={replenishmentTo}
+                  onChange={(e) => setReplenishmentTo(e.target.value)}
+                  style={{ paddingLeft: "12px", paddingRight: "12px" }}
+                />
+              </div>
+            </div>
           </div>
 
-          {/* <div className="w-full lg:w-1/3 relative">
-            <label
-              style={{
-                color: "#99A1B7",
-                fontSize: "11px",
-                display: "inline",
-                marginBottom: "0px",
-              }}
-              className="absolute top-[-10px] px-1 left-2 z-10 text-sm font-medium text-gray-900
-             before:content-[''] before:absolute before:top-1/2 before:left-0
-             before:w-full before:h-1/2 before:bg-[#FCFCFC] before:z-[-1]"
-            >
-              Тип подписки
-            </label>
-            <Select
-              value={subscriptionType}
-              placeholder="Все"
-              className="input ps-0 pe-0 border-none"
-              options={[
-                { label: "Все", value: null },
-                { label: "Все подписки", value: "FULL" },
-                { label: "Lite подписка", value: "LITE" },
-                { label: "Pro подписка", value: "PRO" },
-                { label: "Без подписки", value: "UNSUBSCRIBED" },
-              ]}
-              onChange={(value) => {
-                setSubscriptionType(value);
-                setGamesportStatus(null);
-                setGiveawayValue(null);
-
-                removeFilter("gs_subscription");
-                removeFilter("giveaway_id");
-
-                if (value !== null) {
-                  addFilter("gs_subscription", value);
-                }
-              }}
-
-              // allowClear
-            />
-          </div> */}
-
-          <div className="w-full lg:w-1/2 relative">
-            <label
-              style={{
-                color: "#99A1B7",
-                fontSize: "11px",
-                display: "inline",
-                marginBottom: "0px",
-              }}
-              className="absolute top-[-10px] px-1 left-2 z-10 text-sm font-medium text-gray-900
-             before:content-[''] before:absolute before:top-1/2 before:left-0
-             before:w-full before:h-1/2 before:bg-[#FCFCFC] before:z-[-1]"
-            >
-              Подписка GameSport
-            </label>
-            <Select
-              value={gamesportStatus}
-              placeholder="Все"
-              className="input ps-0 pe-0 border-none"
-              options={[
-                { label: "Все", value: null },
-                { label: "Все подписки", value: "FULL" },
-                { label: "Lite подписка", value: "LITE" },
-                { label: "Pro подписка", value: "PRO" },
-                { label: "Без подписки", value: "UNSUBSCRIBED" },
-              ]}
-              onChange={(value) => {
-                setGamesportStatus(value);
-                setSubscriptionType(null);
-                setGiveawayValue(null);
-
-                removeFilter("gs_subscription");
-                removeFilter("giveaway_id");
-
-                if (value !== null) {
-                  addFilter("gs_subscription", value);
-                }
-              }}
-
-              // allowClear
-            />
+          {/* Дней доступа */}
+          <div className="w-full">
+            <div className="flex items-center gap-2">
+              <div className="flex-1 relative">
+                <label
+                  style={{
+                    color: "#99A1B7",
+                    fontSize: "11px",
+                    display: "inline",
+                    marginBottom: "0px",
+                  }}
+                  className="absolute top-[-10px] px-1 left-2 z-10 text-sm font-medium text-gray-900
+               before:content-[''] before:absolute before:top-1/2 before:left-0
+               before:w-full before:h-1/2 before:bg-[#FCFCFC] before:z-[-1]"
+                >
+                  Дней доступа от
+                </label>
+                <Input
+                  placeholder="0"
+                  className="input w-full"
+                  value={daysAccessFrom}
+                  onChange={(e) => setDaysAccessFrom(e.target.value)}
+                  style={{ paddingLeft: "12px", paddingRight: "12px" }}
+                />
+              </div>
+              <span className="text-gray-500">-</span>
+              <div className="flex-1 relative">
+                <label
+                  style={{
+                    color: "#99A1B7",
+                    fontSize: "11px",
+                    display: "inline",
+                    marginBottom: "0px",
+                  }}
+                  className="absolute top-[-10px] px-1 left-2 z-10 text-sm font-medium text-gray-900
+               before:content-[''] before:absolute before:top-1/2 before:left-0
+               before:w-full before:h-1/2 before:bg-[#FCFCFC] before:z-[-1]"
+                >
+                  до
+                </label>
+                <Input
+                  placeholder="0"
+                  className="input w-full"
+                  value={daysAccessTo}
+                  onChange={(e) => setDaysAccessTo(e.target.value)}
+                  style={{ paddingLeft: "12px", paddingRight: "12px" }}
+                />
+              </div>
+            </div>
           </div>
+
+          {/* Кол-во рефералов */}
+          <div className="w-full">
+            <div className="flex items-center gap-2">
+              <div className="flex-1 relative">
+                <label
+                  style={{
+                    color: "#99A1B7",
+                    fontSize: "11px",
+                    display: "inline",
+                    marginBottom: "0px",
+                  }}
+                  className="absolute top-[-10px] px-1 left-2 z-10 text-sm font-medium text-gray-900
+               before:content-[''] before:absolute before:top-1/2 before:left-0
+               before:w-full before:h-1/2 before:bg-[#FCFCFC] before:z-[-1]"
+                >
+                  Кол-во рефералов от
+                </label>
+                <Input
+                  placeholder="0"
+                  className="input w-full"
+                  value={referralsFrom}
+                  onChange={(e) => setReferralsFrom(e.target.value)}
+                  style={{ paddingLeft: "12px", paddingRight: "12px" }}
+                />
+              </div>
+              <span className="text-gray-500">-</span>
+              <div className="flex-1 relative">
+                <label
+                  style={{
+                    color: "#99A1B7",
+                    fontSize: "11px",
+                    display: "inline",
+                    marginBottom: "0px",
+                  }}
+                  className="absolute top-[-10px] px-1 left-2 z-10 text-sm font-medium text-gray-900
+               before:content-[''] before:absolute before:top-1/2 before:left-0
+               before:w-full before:h-1/2 before:bg-[#FCFCFC] before:z-[-1]"
+                >
+                  до
+                </label>
+                <Input
+                  placeholder="0"
+                  className="input w-full"
+                  value={referralsTo}
+                  onChange={(e) => setReferralsTo(e.target.value)}
+                  style={{ paddingLeft: "12px", paddingRight: "12px" }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Подарков */}
+          <div className="w-full">
+            <div className="flex items-center gap-2">
+              <div className="flex-1 relative">
+                <label
+                  style={{
+                    color: "#99A1B7",
+                    fontSize: "11px",
+                    display: "inline",
+                    marginBottom: "0px",
+                  }}
+                  className="absolute top-[-10px] px-1 left-2 z-10 text-sm font-medium text-gray-900
+               before:content-[''] before:absolute before:top-1/2 before:left-0
+               before:w-full before:h-1/2 before:bg-[#FCFCFC] before:z-[-1]"
+                >
+                  Подарков от
+                </label>
+                <Input
+                  placeholder="0"
+                  className="input w-full"
+                  value={giftsFrom}
+                  onChange={(e) => setGiftsFrom(e.target.value)}
+                  style={{ paddingLeft: "12px", paddingRight: "12px" }}
+                />
+              </div>
+              <span className="text-gray-500">-</span>
+              <div className="flex-1 relative">
+                <label
+                  style={{
+                    color: "#99A1B7",
+                    fontSize: "11px",
+                    display: "inline",
+                    marginBottom: "0px",
+                  }}
+                  className="absolute top-[-10px] px-1 left-2 z-10 text-sm font-medium text-gray-900
+               before:content-[''] before:absolute before:top-1/2 before:left-0
+               before:w-full before:h-1/2 before:bg-[#FCFCFC] before:z-[-1]"
+                >
+                  до
+                </label>
+                <Input
+                  placeholder="0"
+                  className="input w-full"
+                  value={giftsTo}
+                  onChange={(e) => setGiftsTo(e.target.value)}
+                  style={{ paddingLeft: "12px", paddingRight: "12px" }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex w-full gap-6">
+          <button
+            type="button"
+            className="btn btn-danger btn-outline transition-all duration-300"
+            onClick={() => {
+              setSearchKey("");
+              setSearch("");
+              setValueMin(null);
+              setValueMax(null);
+              setSubscriptionType(null);
+              setGamesportStatus(null);
+              setGiveawayValue(null);
+              setReplenishmentFrom("");
+              setReplenishmentTo("");
+              setDaysAccessFrom("");
+              setDaysAccessTo("");
+              setReferralsFrom("");
+              setReferralsTo("");
+              setGiftsFrom("");
+              setGiftsTo("");
+              clearFilters();
+            }}
+          >
+            Сбросить
+          </button>
+          <button className="btn btn-primary btn-outline transition-all duration-300">
+            Применить
+          </button>
         </div>
       </div>
     </form>
