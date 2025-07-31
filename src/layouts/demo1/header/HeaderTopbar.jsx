@@ -151,7 +151,7 @@ const HeaderTopbar = () => {
           })}
         </MenuItem>
       </Menu> */}
-      <div className="w-full relative">
+      {/* <div className="w-full relative">
         <label
           style={{
             color: "#99A1B7",
@@ -173,7 +173,7 @@ const HeaderTopbar = () => {
             { label: "Другой VPN", value: "other_vpn" }, // показываем как "Регулярная", храним как "trigger"
           ]}
         />
-      </div>
+      </div> */}
       <button
         onClick={() => {
           localStorage.removeItem("metronic-tailwind-react-auth-v1=9.1.1");
