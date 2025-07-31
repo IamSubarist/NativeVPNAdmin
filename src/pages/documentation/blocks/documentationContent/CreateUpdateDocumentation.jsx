@@ -11,6 +11,11 @@ import { Input } from "antd";
 const { TextArea } = Input;
 // import ReactQuill from "react-quill";
 // import 'react-quill/dist/quill.snow.css';
+import MarkdownIt from 'markdown-it';
+import MdEditor from 'react-markdown-editor-lite';
+import 'react-markdown-editor-lite/lib/index.css';
+
+const mdParser = new MarkdownIt();
 
 export const CreateUpdateDocumentation = () => {
   const { id } = useParams();
@@ -199,11 +204,18 @@ export const CreateUpdateDocumentation = () => {
             >
               Содержание
             </label>
-            <TextArea
+            {/* <TextArea
               value={formData.text}
               onChange={handleChange("text")}
               style={{ height: "300px", resize: "none" }}
               status={errors.text ? "error" : ""}
+            /> */}
+            <MdEditor
+                value={formData.text}
+                style={{ height: "382px" }}
+                renderHTML={(text) => mdParser.render(text)}
+                onChange={({ text }) => setFormData(prev => ({...prev, text: text}))}
+                status={errors.text ? "error" : ""}
             />
           </div>
           <Select
