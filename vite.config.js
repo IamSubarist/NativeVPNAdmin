@@ -22,13 +22,13 @@ export default defineConfig({
     emptyOutDir: true,
     chunkSizeWarningLimit: 3000,
   },
-  server: {
+    server: {
     proxy: {
-      "/api": {
-        target: "https://adminapp.gamesport.com",
+      '/api': {
+        target: 'http://vpnbot.sjp-asia.group/admin_panel/',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ""),
-      },
-    },
-  },
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      }
+    }
+  }
 });

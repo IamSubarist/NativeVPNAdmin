@@ -26,7 +26,7 @@ var vite_config_default = defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "https://adminapp.gamesport.com",
+        target: "https://vpnbot.sjp-asia.group",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, "")
       }

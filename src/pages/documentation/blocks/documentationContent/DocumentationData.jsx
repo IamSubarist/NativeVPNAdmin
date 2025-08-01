@@ -1,28 +1,32 @@
 import axios from "axios";
 import { BASE_URL } from "../../../../static";
+import axiosInstance from "@/axiosConfig";
 
 export const getDocumentationData = async ({
-  page,
-  filterOptions,
-  per_page,
+  start = 1,
+  filterOptions = {},
+  limit = 10,
 }) => {
   try {
-    const response = await axios.get(`${BASE_URL}/docs_rules/`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("admin_token")}`,
-      },
-      params: {
-        page: page,
-        per_page,
-        ...filterOptions,
-      },
-    });
-
+    const response = await axiosInstance.get(
+      `/api/docs_and_rules/`,
+      {
+        params: {
+          start,
+          limit,
+          ...filterOptions,
+        },
+      }
+    );
+    
     return response.data;
   } catch (error) {
     console.error(error);
+    throw error; 
   }
 };
+
+
 
 export const swapDocumentationPosition = async (firstId, secondId) => {
   try {

@@ -23,20 +23,20 @@ export const DocumentationContent = () => {
     const pageToFetch = pageIndex + 1;
 
     const documentationData = await getDocumentationData({
-      page: pageToFetch,
-      per_page: pageSize,
+      start: pageToFetch,
+      limit: pageSize,
     });
 
     setTotalPages(documentationData.total_pages);
     setSize(documentationData.per_page);
-
+    
     return {
       data: documentationData.items,
       totalCount: documentationData.total_items,
     };
   };
 
-  const handleSwap = async (index, direction, documentationData) => {
+const handleSwap = async (index, direction, documentationData) => {
     const targetIndex = direction === "up" ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= documentationData.length) return;
 
@@ -63,13 +63,13 @@ export const DocumentationContent = () => {
   const columns = useMemo(
     () => [
       {
-        accessorFn: (row) => row.name,
-        id: "name",
+        accessorFn: (row) => row.title,
+        id: "title",
         header: () => "Название",
         cell: (info) => {
           return (
             <div className="min-w-[300px]">
-              <div>{info.row.original.name}</div>
+              <div>{info.row.original.title}</div>
             </div>
           );
         },
@@ -79,13 +79,13 @@ export const DocumentationContent = () => {
         },
       },
       {
-        accessorFn: (row) => row.text,
-        id: "text",
+        accessorFn: (row) => row.description,
+        id: "description",
         header: () => "Содержание",
         cell: (info) => {
           return (
-            <div className="max-h-24 overflow-hidden text-ellipsis line-clamp-2 min-w-[946px]">
-              <ReactMarkdown>{info.row.original.text}</ReactMarkdown>
+            <div className="max-h-24 overflow-hidden text-ellipsis line-clamp-2 min-w-[910px]">
+              <ReactMarkdown>{info.row.original.description}</ReactMarkdown>
             </div>
           );
         },
@@ -98,7 +98,7 @@ export const DocumentationContent = () => {
         id: "status",
         header: () => "Статус",
         cell: (info) => {
-          return statusLabels[info.row.original.status];
+          return info.row.original.status ? "Активен" : "Неактивен";
         },
         meta: {
           className: "w-1/3",
@@ -111,7 +111,7 @@ export const DocumentationContent = () => {
         header: () => "Порядок",
         cell: (info) => {
           return (
-            <div className="flex gap-6 justify-center">
+            <div className="flex gap-6 justify-center box-border">
               <button
                 className="ki-filled text-2xl opacity-30 disabled:opacity-15"
                 onClick={() =>
