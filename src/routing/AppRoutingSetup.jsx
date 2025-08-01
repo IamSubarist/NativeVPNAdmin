@@ -99,6 +99,7 @@ import { SummaryPage } from "../pages/summary/SummaryPage";
 import { ServersPage } from "../pages/servers/ServersPage";
 import { PromocodesPage } from "../pages/promocodes/PromocodesPage";
 import { WhiteLabelPage } from "../pages/whitelabel/WhiteLabelPage";
+import { UserDetail } from "../pages/users/blocks/invoicing/UserDetail";
 const AppRoutingSetup = () => {
   return (
     <Routes>
@@ -111,6 +112,7 @@ const AppRoutingSetup = () => {
           <Route path="/white-label" element={<WhiteLabelPage />} />
           <Route path="/statistics" element={<StatisticsPage />} />
           <Route path="/users" element={<UsersPage />} />
+          <Route path="/users/:id" element={<UserDetail />} />
           <Route path="/faq" element={<FaqPage />} />
           <Route path="/giveaways" element={<Giveaways />} />
           <Route

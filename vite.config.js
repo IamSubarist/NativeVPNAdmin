@@ -24,8 +24,13 @@ export default defineConfig({
   },
     server: {
     proxy: {
+<<<<<<< Updated upstream
       '/api': {
         target: 'http://vpnbot.sjp-asia.group/admin_panel/',
+=======
+      "/api": {
+        target: "https://vpnbot.sjp-asia.group/admin_panel",
+>>>>>>> Stashed changes
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       }

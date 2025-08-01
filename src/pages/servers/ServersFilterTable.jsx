@@ -643,7 +643,9 @@ export const ServersFilterTable = ({ onApplyFilters, onResetFilters }) => {
                 display: "inline",
                 marginBottom: "0px",
               }}
-              className="absolute top-[-10px] px-1 left-2 z-10 text-sm font-medium text-gray-900"
+              className="absolute top-[-10px] px-1 left-2 z-10 text-sm font-medium text-gray-900
+               before:content-[''] before:absolute before:top-1/2 before:left-0
+               before:w-full before:h-1/2 before:bg-[#FCFCFC] before:z-[-1]"
             >
               IP адрес / домен
             </label>

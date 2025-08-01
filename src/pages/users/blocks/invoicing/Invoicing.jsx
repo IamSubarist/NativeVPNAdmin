@@ -6,6 +6,7 @@ import { ModalContext } from "@/providers/ModalProvider";
 import { FilterContext } from "@/providers/FilterProvider";
 import { usePagination } from "@/providers/PaginationContext";
 import { FilterTabel } from "../../FilterTabel";
+import { Link } from "react-router-dom";
 
 const Invoicing = () => {
   const [emptyTrigger, setEmptyTrigger] = useState(0);
@@ -244,7 +245,7 @@ const Invoicing = () => {
       {
         accessorFn: (row) => row.date_of_last_replenishment,
         id: "date_of_last_replenishment",
-        header: () => "Дата рег.",
+        header: () => "Послед. пополнение",
         cell: (info) => {
           const formattedDate = new Date(
             info.row.original.date_of_last_replenishment
@@ -258,7 +259,7 @@ const Invoicing = () => {
           );
         },
         meta: {
-          className: "min-w-[170px]",
+          className: "min-w-[180px]",
           cellClassName: "text-gray-800 font-normal",
         },
       },
@@ -313,6 +314,29 @@ const Invoicing = () => {
         },
         meta: {
           className: "min-w-[260px]",
+          cellClassName: "text-gray-800 font-normal",
+        },
+      },
+      {
+        accessorFn: (row) => row.actions,
+        id: "actions",
+        header: () => "Действия",
+        cell: (info) => {
+          return (
+            <div className="flex gap-3 justify-center">
+              <Link
+                to={`/users/${info.row.original.id}`}
+                state={{ userItem: info.row.original }}
+              >
+                <button className="ki-filled text-2xl text-primary">
+                  <KeenIcon icon={"setting-2"} />
+                </button>
+              </Link>
+            </div>
+          );
+        },
+        meta: {
+          className: "w-1/6",
           cellClassName: "text-gray-800 font-normal",
         },
       },
